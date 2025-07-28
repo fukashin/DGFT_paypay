@@ -18,5 +18,6 @@ axios.post(endpoint, requestBody, {
         console.error('❌ エラー:', err.response.status, err.response.data);
     } else {
         console.error('❌ 通信エラー:', err.message);
+        console.error('詳細:', err.code, err.config);
     }
 });
