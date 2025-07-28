@@ -10,16 +10,16 @@ $params = @{
     serviceOptionType = "online"
     accountingType = "0"
     amount = "1000"
-    itemName = "テスト商品"
-    itemId = "item001"
-    successUrl = "https://example.com/success"
-    cancelUrl = "https://example.com/cancel"
-    errorUrl = "https://example.com/error"
-    pushUrl = "https://example.com/push"
-    transitionType = "1"
-    extendParameterType = "0"
-    txnVersion = "2.0.0"
-    dummyRequest = "1"
+    itemName = "テスト商品",
+    itemId = "item001",
+    successUrl = "https://example.com/success",
+    cancelUrl = "https://example.com/cancel",
+    errorUrl = "https://example.com/error",
+    pushUrl = "https://example.com/push",
+    transitionType = "1",
+    extendParameterType = "0",
+    txnVersion = "2.0.0",
+    dummyRequest = "1",
     merchantCcid = $merchantCcid
 }
 
@@ -43,4 +43,6 @@ $result = @{
 
 # ファイル出力
 $result | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\request.json
+
+# 表示
 Write-Output "authHash: $authHash"
