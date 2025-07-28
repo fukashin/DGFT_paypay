@@ -157,22 +157,29 @@ interface PaypayConfig {
 npm run build
 ```
 
-## 開発
+## Webアプリの起動
 
 ```bash
+# 開発モード（推奨）
 npm run dev
+
+# または本番モード
+npm run build
+npm start
+```
+
+ブラウザで http://localhost:3000 にアクセスしてください。
+
+## コマンドライン例の実行
+
+```bash
+npm run dev:example
 ```
 
 ## テスト
 
 ```bash
 npm test
-```
-
-## 使用例の実行
-
-```bash
-npm run dev src/examples/basic-usage.ts
 ```
 
 ## 注意事項

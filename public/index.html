@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPay決済テストアプリ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.danger {
+            background-color: #dc3545;
+        }
+
+        button.danger:hover {
+            background-color: #c82333;
+        }
+
+        button.success {
+            background-color: #28a745;
+        }
+
+        button.success:hover {
+            background-color: #218838;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .config-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+
+        .config-info p {
+            margin: 5px 0;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>PayPay決済テストアプリ</h1>
+
+    <div class="container">
+        <div class="config-info">
+            <h3>設定情報</h3>
+            <p><strong>マーチャントCCID:</strong> A000000000000000000000cc（仮の値）</p>
+            <p><strong>環境:</strong> テスト環境</p>
+            <p><strong>バージョン:</strong> 2.0.0</p>
+            <p><strong>注意:</strong> これはテスト用の実装です。実際のPayPay決済は行われません。</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- 都度決済 -->
+        <div class="container">
+            <h2>都度決済</h2>
+            <div class="form-group">
+                <label for="amount">金額（円）:</label>
+                <input type="number" id="amount" value="1000" min="1" max="9999999">
+            </div>
+            <div class="form-group">
+                <label for="itemName">商品名:</label>
+                <input type="text" id="itemName" value="テスト商品">
+            </div>
+            <div class="form-group">
+                <label for="itemId">商品ID:</label>
+                <input type="text" id="itemId" value="ITEM001">
+            </div>
+            <button onclick="authorize()">申込</button>
+
+            <h3>売上・取消・返金</h3>
+            <div class="form-group">
+                <label for="orderIdForCapture">取引ID:</label>
+                <input type="text" id="orderIdForCapture" placeholder="申込後に表示される取引ID">
+            </div>
+            <div class="form-group">
+                <label for="captureAmount">売上金額（空白で全額）:</label>
+                <input type="number" id="captureAmount" placeholder="部分売上の場合のみ入力">
+            </div>
+            <button class="success" onclick="capture()">売上確定</button>
+            <button class="danger" onclick="cancel()">取消</button>
+            <button onclick="refund()">返金</button>
+        </div>
+
+        <!-- 随時決済 -->
+        <div class="container">
+            <h2>随時決済</h2>
+            <div class="form-group">
+                <label for="subItemName">サービス名:</label>
+                <input type="text" id="subItemName" value="サブスクリプション">
+            </div>
+            <div class="form-group">
+                <label for="subItemId">サービスID:</label>
+                <input type="text" id="subItemId" value="SUB001">
+            </div>
+            <button onclick="authorizeSubscription()">随時決済申込</button>
+
+            <h3>再与信・解約</h3>
+            <div class="form-group">
+                <label for="originalOrderId">元取引ID:</label>
+                <input type="text" id="originalOrderId" placeholder="随時決済申込後の取引ID">
+            </div>
+            <div class="form-group">
+                <label for="rechargeAmount">課金金額:</label>
+                <input type="number" id="rechargeAmount" value="500" min="1">
+            </div>
+            <div class="form-group">
+                <label for="rechargeItemName">課金内容:</label>
+                <input type="text" id="rechargeItemName" value="月額料金">
+            </div>
+            <button class="success" onclick="reauthorize()">再与信（課金）</button>
+            <button class="danger" onclick="terminate()">解約</button>
+        </div>
+    </div>
+
+    <!-- 結果表示エリア -->
+    <div class="container">
+        <h2>実行結果</h2>
+        <div id="result" class="result info">ここに実行結果が表示されます</div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+
+        function showResult(data, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${isError ? 'error' : 'success'}`;
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function showError(message) {
+            showResult({ error: message }, true);
+        }
+
+        async function apiCall(endpoint, data) {
+            try {
+                const response = await fetch(`${API_BASE}/api/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                showResult(result, !result.success);
+
+                // 成功時に取引IDを自動入力
+                if (result.success && result.data && result.data.orderId) {
+                    if (endpoint === 'authorize') {
+                        document.getElementById('orderIdForCapture').value = result.data.orderId;
+                    } else if (endpoint === 'authorize-subscription') {
+                        document.getElementById('originalOrderId').value = result.data.orderId;
+                    }
+                }
+
+                return result;
+            } catch (error) {
+                showError(`ネットワークエラー: ${error.message}`);
+                return null;
+            }
+        }
+
+        // 都度決済申込
+        async function authorize() {
+            const amount = document.getElementById('amount').value;
+            const itemName = document.getElementById('itemName').value;
+            const itemId = document.getElementById('itemId').value;
+
+            if (!amount || !itemName || !itemId) {
+                showError('すべての項目を入力してください');
+                return;
+            }
+
+            await apiCall('authorize', { amount, itemName, itemId });
+        }
+
+        // 随時決済申込
+        async function authorizeSubscription() {
+            const itemName = document.getElementById('subItemName').value;
+            const itemId = document.getElementById('subItemId').value;
+
+            if (!itemName || !itemId) {
+                showError('すべての項目を入力してください');
+                return;
+            }
+
+            await apiCall('authorize-subscription', { itemName, itemId });
+        }
+
+        // 売上確定
+        async function capture() {
+            const orderId = document.getElementById('orderIdForCapture').value;
+            const amount = document.getElementById('captureAmount').value;
+
+            if (!orderId) {
+                showError('取引IDを入力してください');
+                return;
+            }
+
+            const data = { orderId };
+            if (amount) {
+                data.amount = amount;
+            }
+
+            await apiCall('capture', data);
+        }
+
+        // 取消
+        async function cancel() {
+            const orderId = document.getElementById('orderIdForCapture').value;
+
+            if (!orderId) {
+                showError('取引IDを入力してください');
+                return;
+            }
+
+            await apiCall('cancel', { orderId });
+        }
+
+        // 返金
+        async function refund() {
+            const orderId = document.getElementById('orderIdForCapture').value;
+            const amount = document.getElementById('captureAmount').value;
+
+            if (!orderId) {
+                showError('取引IDを入力してください');
+                return;
+            }
+
+            const data = { orderId };
+            if (amount) {
+                data.amount = amount;
+            }
+
+            await apiCall('refund', data);
+        }
+
+        // 再与信
+        async function reauthorize() {
+            const originalOrderId = document.getElementById('originalOrderId').value;
+            const amount = document.getElementById('rechargeAmount').value;
+            const itemName = document.getElementById('rechargeItemName').value;
+
+            if (!originalOrderId || !amount) {
+                showError('元取引IDと課金金額を入力してください');
+                return;
+            }
+
+            await apiCall('reauthorize', {
+                originalOrderId,
+                amount,
+                itemName,
+                itemId: 'RECHARGE001'
+            });
+        }
+
+        // 解約
+        async function terminate() {
+            const orderId = document.getElementById('originalOrderId').value;
+
+            if (!orderId) {
+                showError('元取引IDを入力してください');
+                return;
+            }
+
+            await apiCall('terminate', { orderId, force: true });
+        }
+
+        // 初期表示
+        document.addEventListener('DOMContentLoaded', function () {
+            showResult({ message: 'PayPay決済テストアプリが起動しました。各機能をテストできます。' });
+        });
+    </script>
+</body>
+
+</html>
