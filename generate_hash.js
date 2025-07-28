@@ -1,9 +1,10 @@
 const crypto = require('crypto');
 const fs = require('fs');
+require('dotenv').config();
 
-// マーチャント情報（仮）
-const merchantCcid = "A100000000000000000000cc";
-const merchantKey = "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
+// .env から読み込み
+const merchantCcid = process.env.MERCHANT_CCID;
+const merchantKey = process.env.MERCHANT_KEY;
 
 // params 定義
 const params = {
