@@ -17,6 +17,8 @@ axios.post(endpoint, requestBody, {
     if (err.response) {
         console.error('❌ エラー:', err.response.status, err.response.data);
         console.error('詳細:', err.code, err.config);
+        console.error('レスポンスヘッダー:', err.response.headers);
+        fs.writeFileSync('error_response.html', err.response.data);
     } else {
         console.error('❌ 通信エラー:', err.message);
         console.error('詳細:', err.code, err.config);
