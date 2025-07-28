@@ -16,6 +16,7 @@ axios.post(endpoint, requestBody, {
 }).catch(err => {
     if (err.response) {
         console.error('❌ エラー:', err.response.status, err.response.data);
+        console.error('詳細:', err.code, err.config);
     } else {
         console.error('❌ 通信エラー:', err.message);
         console.error('詳細:', err.code, err.config);
