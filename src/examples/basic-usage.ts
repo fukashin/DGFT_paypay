@@ -2,7 +2,7 @@ import { PaypayClient, PaypayConfig } from '../index';
 import { generateOrderId } from '../utils/auth.utils';
 
 /**
- * PayPay決済の基本的な使用例
+ * PayPay都度決済の基本的な使用例
  */
 async function basicUsageExample() {
     // 設定（仮の値を使用）
@@ -17,7 +17,7 @@ async function basicUsageExample() {
     const paypayClient = new PaypayClient(config);
 
     try {
-        console.log('=== PayPay決済の基本的な使用例 ===\n');
+        console.log('=== PayPay都度決済の基本的な使用例 ===\n');
 
         // 1. 都度決済の申込
         console.log('1. 都度決済の申込を実行中...');
@@ -75,66 +75,6 @@ async function basicUsageExample() {
         } else {
             console.log('❌ 申込に失敗しました');
             console.log(`エラー: ${PaypayClient.getErrorMessage(authorizeResponse)}\n`);
-        }
-
-        // 4. 随時決済の例
-        console.log('4. 随時決済の申込を実行中...');
-        const subscriptionOrderId = generateOrderId('SUB');
-
-        const subscriptionResponse = await paypayClient.authorize({
-            orderId: subscriptionOrderId,
-            accountingType: '1', // 随時決済
-            itemName: 'サブスクリプション',
-            itemId: 'SUB001',
-            successUrl: 'https://example.com/success',
-            cancelUrl: 'https://example.com/cancel',
-            errorUrl: 'https://example.com/error',
-            pushUrl: 'https://example.com/push'
-        });
-
-        if (PaypayClient.isSuccess(subscriptionResponse)) {
-            console.log('✅ 随時決済の申込が成功しました');
-            console.log(`取引ID: ${subscriptionResponse.result.orderId}\n`);
-
-            // 5. 再与信（随時決済での課金）
-            console.log('5. 再与信を実行中...');
-            const rechargeOrderId = generateOrderId('CHARGE');
-
-            const reAuthorizeResponse = await paypayClient.reAuthorize({
-                orderId: rechargeOrderId,
-                originalOrderId: subscriptionOrderId,
-                amount: '500', // 500円課金
-                itemName: '月額料金',
-                itemId: 'MONTHLY001',
-                nsfRecoveryFlag: 'true' // 残高不足時の支払い要求を有効
-            });
-
-            if (PaypayClient.isSuccess(reAuthorizeResponse)) {
-                console.log('✅ 再与信が成功しました');
-                console.log(`課金日時: ${reAuthorizeResponse.result.paypayPaidDatetime}`);
-                console.log(`PayPay注文ID: ${reAuthorizeResponse.result.paypayOrderId}\n`);
-            } else {
-                console.log('❌ 再与信に失敗しました');
-                console.log(`エラー: ${PaypayClient.getErrorMessage(reAuthorizeResponse)}\n`);
-            }
-
-            // 6. 随時決済の解約
-            console.log('6. 随時決済の解約を実行中...');
-            const terminateResponse = await paypayClient.terminate({
-                orderId: subscriptionOrderId,
-                force: 'true' // 強制解約（2者間）
-            });
-
-            if (PaypayClient.isSuccess(terminateResponse)) {
-                console.log('✅ 解約が成功しました');
-                console.log(`解約日時: ${terminateResponse.result.paypayTerminatedDatetime}\n`);
-            } else {
-                console.log('❌ 解約に失敗しました');
-                console.log(`エラー: ${PaypayClient.getErrorMessage(terminateResponse)}\n`);
-            }
-        } else {
-            console.log('❌ 随時決済の申込に失敗しました');
-            console.log(`エラー: ${PaypayClient.getErrorMessage(subscriptionResponse)}\n`);
         }
 
     } catch (error) {

@@ -23,22 +23,6 @@ export interface PaypayAuthorizeRequest {
     merchantCcid: string; // マーチャントCCID
 }
 
-// 再与信（ReAuthorize）リクエスト
-export interface PaypayReAuthorizeRequest {
-    orderId: string; // 取引ID
-    serviceOptionType: 'online';
-    originalOrderId: string; // 元取引ID
-    amount: string; // 決済金額
-    itemName?: string; // 商品名
-    itemId?: string; // 商品ID
-    nsfRecoveryFlag?: 'true' | 'false'; // 支払い要求実行フラグ
-    nsfRecoveryExpiredDatetime?: string; // 支払い有効期限（YYYYMMDDhhmmss）
-    pushUrl?: string; // プッシュ先URL
-    payNowIdParam?: PayNowIdParam;
-    txnVersion?: string;
-    dummyRequest?: '0' | '1';
-    merchantCcid: string;
-}
 
 // 取消（Cancel）リクエスト
 export interface PaypayCancelRequest {
@@ -73,20 +57,6 @@ export interface PaypayRefundRequest {
     merchantCcid: string;
 }
 
-// 解約（Terminate）リクエスト
-export interface PaypayTerminateRequest {
-    orderId: string; // 取引ID
-    serviceOptionType: 'online';
-    force?: 'true' | 'false'; // 強制解約フラグ
-    successUrl?: string; // 解約完了時URL
-    cancelUrl?: string; // 解約キャンセル時URL
-    errorUrl?: string; // 解約エラー時URL
-    pushUrl?: string; // プッシュ先URL
-    payNowIdParam?: PayNowIdParam;
-    txnVersion?: string;
-    dummyRequest?: '0' | '1';
-    merchantCcid: string;
-}
 
 // API リクエストの共通構造
 export interface PaypayApiRequest<T> {
@@ -148,22 +118,18 @@ export interface PaypayConfig {
     txnVersion: string; // トランザクションバージョン
 }
 
-// API エンドポイント
+// API エンドポイント（都度決済のみ）
 export const PAYPAY_ENDPOINTS = {
     PRODUCTION: {
         AUTHORIZE: 'https://api3.veritrans.co.jp/paynow/v2/Authorize/paypay',
-        REAUTHORIZE: 'https://api3.veritrans.co.jp/paynow/v2/ReAuthorize/paypay',
         CANCEL: 'https://api3.veritrans.co.jp/paynow/v2/Cancel/paypay',
         CAPTURE: 'https://api3.veritrans.co.jp/paynow/v2/Capture/paypay',
-        REFUND: 'https://api3.veritrans.co.jp/paynow/v2/Refund/paypay',
-        TERMINATE: 'https://api3.veritrans.co.jp/paynow/v2/Terminate/paypay'
+        REFUND: 'https://api3.veritrans.co.jp/paynow/v2/Refund/paypay'
     },
     TEST: {
         AUTHORIZE: 'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
-        REAUTHORIZE: 'https://api3.veritrans.co.jp/test-paynow/v2/ReAuthorize/paypay',
         CANCEL: 'https://api3.veritrans.co.jp/test-paynow/v2/Cancel/paypay',
         CAPTURE: 'https://api3.veritrans.co.jp/test-paynow/v2/Capture/paypay',
-        REFUND: 'https://api3.veritrans.co.jp/test-paynow/v2/Refund/paypay',
-        TERMINATE: 'https://api3.veritrans.co.jp/test-paynow/v2/Terminate/paypay'
+        REFUND: 'https://api3.veritrans.co.jp/test-paynow/v2/Refund/paypay'
     }
 } as const;

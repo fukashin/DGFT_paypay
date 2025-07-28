@@ -2,11 +2,9 @@ import axios, { AxiosResponse } from 'axios';
 import {
     PaypayConfig,
     PaypayAuthorizeRequest,
-    PaypayReAuthorizeRequest,
     PaypayCancelRequest,
     PaypayCaptureRequest,
     PaypayRefundRequest,
-    PaypayTerminateRequest,
     PaypayApiRequest,
     PaypayApiResponse,
     PaypayErrorResponse,
@@ -127,33 +125,6 @@ export class PaypayClient {
         return this.sendRequest(url, params);
     }
 
-    /**
-     * 再与信（ReAuthorize）- 随時決済
-     * @param request 再与信リクエスト
-     * @returns APIレスポンス
-     */
-    async reAuthorize(request: Omit<PaypayReAuthorizeRequest, 'merchantCcid' | 'txnVersion' | 'serviceOptionType'>): Promise<PaypayApiResponse> {
-        // バリデーション
-        validateOrderId(request.orderId);
-        validateOrderId(request.originalOrderId);
-        validateAmount(request.amount);
-
-        if (request.pushUrl) validateUrl(request.pushUrl);
-
-        // リクエストパラメータを構築
-        const params: PaypayReAuthorizeRequest = {
-            ...request,
-            serviceOptionType: 'online',
-            nsfRecoveryFlag: request.nsfRecoveryFlag || 'false',
-            payNowIdParam: request.payNowIdParam || {},
-            txnVersion: this.config.txnVersion,
-            dummyRequest: this.config.isProduction ? '0' : '1',
-            merchantCcid: this.config.merchantCcid
-        };
-
-        const url = this.getEndpointUrl('REAUTHORIZE');
-        return this.sendRequest(url, params);
-    }
 
     /**
      * 取消（Cancel）
@@ -232,34 +203,6 @@ export class PaypayClient {
         return this.sendRequest(url, params);
     }
 
-    /**
-     * 解約（Terminate）- 随時決済
-     * @param request 解約リクエスト
-     * @returns APIレスポンス
-     */
-    async terminate(request: Omit<PaypayTerminateRequest, 'merchantCcid' | 'txnVersion' | 'serviceOptionType'>): Promise<PaypayApiResponse> {
-        // バリデーション
-        validateOrderId(request.orderId);
-
-        if (request.successUrl) validateUrl(request.successUrl);
-        if (request.cancelUrl) validateUrl(request.cancelUrl);
-        if (request.errorUrl) validateUrl(request.errorUrl);
-        if (request.pushUrl) validateUrl(request.pushUrl, 256);
-
-        // リクエストパラメータを構築
-        const params: PaypayTerminateRequest = {
-            ...request,
-            serviceOptionType: 'online',
-            force: request.force || 'false',
-            payNowIdParam: request.payNowIdParam || {},
-            txnVersion: this.config.txnVersion,
-            dummyRequest: this.config.isProduction ? '0' : '1',
-            merchantCcid: this.config.merchantCcid
-        };
-
-        const url = this.getEndpointUrl('TERMINATE');
-        return this.sendRequest(url, params);
-    }
 
     /**
      * レスポンスが成功かどうかを判定

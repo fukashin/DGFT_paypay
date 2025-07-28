@@ -1,17 +1,14 @@
-# PayPay決済 TypeScript SDK
+# PayPay都度決済 TypeScript SDK
 
-VeriTrans4GのPayPay決済APIを使用するためのTypeScript SDKです。
+VeriTrans4GのPayPay都度決済APIを使用するためのTypeScript SDKです。
 
 ## 機能
 
 - **都度決済**: 一回限りの決済処理
-- **随時決済**: サブスクリプションなどの継続課金
 - **申込（Authorize）**: 決済の申込処理
-- **再与信（ReAuthorize）**: 随時決済での課金処理
 - **売上（Capture）**: 申込済み取引の売上確定
 - **取消（Cancel）**: 申込済み取引の取消
 - **返金（Refund）**: 売上確定済み取引の返金
-- **解約（Terminate）**: 随時決済の解約
 
 ## インストール
 
@@ -66,37 +63,6 @@ if (PaypayClient.isSuccess(authorizeResponse)) {
 }
 ```
 
-### 随時決済の例
-
-```typescript
-// 1. 随時決済の申込（利用承諾）
-const subscriptionResponse = await paypayClient.authorize({
-    orderId: 'SUB123456',
-    accountingType: '1', // 随時決済
-    itemName: 'サブスクリプション',
-    itemId: 'SUB001',
-    successUrl: 'https://example.com/success',
-    cancelUrl: 'https://example.com/cancel',
-    errorUrl: 'https://example.com/error'
-});
-
-if (PaypayClient.isSuccess(subscriptionResponse)) {
-    console.log('随時決済申込成功');
-    
-    // 2. 再与信（課金）
-    const reAuthorizeResponse = await paypayClient.reAuthorize({
-        orderId: 'CHARGE123456',
-        originalOrderId: 'SUB123456',
-        amount: '500',
-        itemName: '月額料金',
-        itemId: 'MONTHLY001'
-    });
-    
-    if (PaypayClient.isSuccess(reAuthorizeResponse)) {
-        console.log('課金成功');
-    }
-}
-```
 
 ### エラーハンドリング
 
@@ -128,12 +94,10 @@ new PaypayClient(config: PaypayConfig)
 
 #### メソッド
 
-- `authorize(request)`: 申込（都度決済・随時決済）
-- `reAuthorize(request)`: 再与信（随時決済）
+- `authorize(request)`: 申込（都度決済）
 - `capture(request)`: 売上確定
 - `cancel(request)`: 取消
 - `refund(request)`: 返金
-- `terminate(request)`: 解約（随時決済）
 
 #### 静的メソッド
 
