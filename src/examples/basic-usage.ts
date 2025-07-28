@@ -2,7 +2,7 @@ import { PaypayClient, PaypayConfig } from '../index';
 import { generateOrderId } from '../utils/auth.utils';
 
 /**
- * PayPay都度決済の基本的な使用例
+ * PayPay決済申込の使用例
  */
 async function basicUsageExample() {
     // 設定（仮の値を使用）
@@ -17,10 +17,10 @@ async function basicUsageExample() {
     const paypayClient = new PaypayClient(config);
 
     try {
-        console.log('=== PayPay都度決済の基本的な使用例 ===\n');
+        console.log('=== PayPay決済申込の使用例 ===\n');
 
-        // 1. 都度決済の申込
-        console.log('1. 都度決済の申込を実行中...');
+        // 都度決済の申込
+        console.log('都度決済の申込を実行中...');
         const orderId = generateOrderId('TEST');
 
         const authorizeResponse = await paypayClient.authorize({
@@ -39,102 +39,22 @@ async function basicUsageExample() {
             console.log('✅ 申込が成功しました');
             console.log(`取引ID: ${authorizeResponse.result.orderId}`);
             console.log(`マーチャント取引番号: ${authorizeResponse.result.marchTxn}`);
-            console.log(`顧客取引番号: ${authorizeResponse.result.custTxn}\n`);
-
-            // 2. 売上確定
-            console.log('2. 売上確定を実行中...');
-            const captureResponse = await paypayClient.capture({
-                orderId: orderId,
-                amount: '1000' // 全額売上
-            });
-
-            if (PaypayClient.isSuccess(captureResponse)) {
-                console.log('✅ 売上確定が成功しました');
-                console.log(`売上日時: ${captureResponse.result.paypayCapturedDatetime}`);
-                console.log(`残高: ${captureResponse.result.balance}円\n`);
-
-                // 3. 部分返金
-                console.log('3. 部分返金を実行中...');
-                const refundResponse = await paypayClient.refund({
-                    orderId: orderId,
-                    amount: '300' // 300円返金
-                });
-
-                if (PaypayClient.isSuccess(refundResponse)) {
-                    console.log('✅ 返金が成功しました');
-                    console.log(`返金日時: ${refundResponse.result.paypayRefundedDatetime}`);
-                    console.log(`残高: ${refundResponse.result.balance}円\n`);
-                } else {
-                    console.log('❌ 返金に失敗しました');
-                    console.log(`エラー: ${PaypayClient.getErrorMessage(refundResponse)}\n`);
-                }
-            } else {
-                console.log('❌ 売上確定に失敗しました');
-                console.log(`エラー: ${PaypayClient.getErrorMessage(captureResponse)}\n`);
-            }
+            console.log(`顧客取引番号: ${authorizeResponse.result.custTxn}`);
+            console.log(`レスポンス内容: ${authorizeResponse.result.responseContents ? 'HTML取得済み' : 'なし'}\n`);
         } else {
             console.log('❌ 申込に失敗しました');
-            console.log(`エラー: ${PaypayClient.getErrorMessage(authorizeResponse)}\n`);
+            console.log(`エラー: ${PaypayClient.getErrorMessage(authorizeResponse)}`);
+            console.log(`詳細: ${JSON.stringify(authorizeResponse.result, null, 2)}\n`);
         }
 
-    } catch (error) {
-        console.error('予期しないエラーが発生しました:', error);
-    }
-}
-
-/**
- * 取消の使用例
- */
-async function cancelExample() {
-    const config: PaypayConfig = {
-        merchantCcid: 'A000000000000000000000cc',
-        merchantPassword: 'dummy_password_123',
-        isProduction: false,
-        txnVersion: '2.0.0'
-    };
-
-    const paypayClient = new PaypayClient(config);
-
-    try {
-        console.log('=== 取消の使用例 ===\n');
-
-        // 申込
-        const orderId = generateOrderId('CANCEL');
-        const authorizeResponse = await paypayClient.authorize({
-            orderId: orderId,
-            accountingType: '0',
-            amount: '2000',
-            itemName: 'キャンセルテスト商品',
-            itemId: 'CANCEL001',
-            successUrl: 'https://example.com/success',
-            cancelUrl: 'https://example.com/cancel',
-            errorUrl: 'https://example.com/error'
-        });
-
-        if (PaypayClient.isSuccess(authorizeResponse)) {
-            console.log('✅ 申込が成功しました');
-            console.log(`取引ID: ${authorizeResponse.result.orderId}\n`);
-
-            // 取消
-            console.log('取消を実行中...');
-            const cancelResponse = await paypayClient.cancel({
-                orderId: orderId
-            });
-
-            if (PaypayClient.isSuccess(cancelResponse)) {
-                console.log('✅ 取消が成功しました');
-                console.log(`取消日時: ${cancelResponse.result.paypayCancelledDatetime}\n`);
-            } else {
-                console.log('❌ 取消に失敗しました');
-                console.log(`エラー: ${PaypayClient.getErrorMessage(cancelResponse)}\n`);
-            }
+    } catch (error: any) {
+        console.error('予期しないエラーが発生しました:');
+        if (error && error.error) {
+            console.error(`APIエラー: ${error.error.message}`);
+            console.error(`詳細: ${JSON.stringify(error.error, null, 2)}`);
         } else {
-            console.log('❌ 申込に失敗しました');
-            console.log(`エラー: ${PaypayClient.getErrorMessage(authorizeResponse)}\n`);
+            console.error(error);
         }
-
-    } catch (error) {
-        console.error('予期しないエラーが発生しました:', error);
     }
 }
 
@@ -142,9 +62,7 @@ async function cancelExample() {
 if (require.main === module) {
     (async () => {
         await basicUsageExample();
-        console.log('\n' + '='.repeat(50) + '\n');
-        await cancelExample();
     })();
 }
 
-export { basicUsageExample, cancelExample };
+export { basicUsageExample };

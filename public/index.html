@@ -160,9 +160,9 @@
         </div>
     </div>
 
-    <!-- 都度決済 -->
+    <!-- PayPay申込 -->
     <div class="container">
-        <h2>都度決済</h2>
+        <h2>PayPay決済申込</h2>
         <div class="form-group">
             <label for="amount">金額（円）:</label>
             <input type="number" id="amount" value="1000" min="1" max="9999999">
@@ -176,19 +176,6 @@
             <input type="text" id="itemId" value="ITEM001">
         </div>
         <button onclick="authorize()">申込</button>
-
-        <h3>売上・取消・返金</h3>
-        <div class="form-group">
-            <label for="orderIdForCapture">取引ID:</label>
-            <input type="text" id="orderIdForCapture" placeholder="申込後に表示される取引ID">
-        </div>
-        <div class="form-group">
-            <label for="captureAmount">売上金額（空白で全額）:</label>
-            <input type="number" id="captureAmount" placeholder="部分売上の場合のみ入力">
-        </div>
-        <button class="success" onclick="capture()">売上確定</button>
-        <button class="danger" onclick="cancel()">取消</button>
-        <button onclick="refund()">返金</button>
     </div>
 
     <!-- 結果表示エリア -->
@@ -223,15 +210,6 @@
                 const result = await response.json();
                 showResult(result, !result.success);
 
-                // 成功時に取引IDを自動入力
-                if (result.success && result.data && result.data.orderId) {
-                    if (endpoint === 'authorize') {
-                        document.getElementById('orderIdForCapture').value = result.data.orderId;
-                    } else if (endpoint === 'authorize-subscription') {
-                        document.getElementById('originalOrderId').value = result.data.orderId;
-                    }
-                }
-
                 return result;
             } catch (error) {
                 showError(`ネットワークエラー: ${error.message}`);
@@ -239,7 +217,7 @@
             }
         }
 
-        // 都度決済申込
+        // PayPay決済申込
         async function authorize() {
             const amount = document.getElementById('amount').value;
             const itemName = document.getElementById('itemName').value;
@@ -251,55 +229,6 @@
             }
 
             await apiCall('authorize', { amount, itemName, itemId });
-        }
-
-
-        // 売上確定
-        async function capture() {
-            const orderId = document.getElementById('orderIdForCapture').value;
-            const amount = document.getElementById('captureAmount').value;
-
-            if (!orderId) {
-                showError('取引IDを入力してください');
-                return;
-            }
-
-            const data = { orderId };
-            if (amount) {
-                data.amount = amount;
-            }
-
-            await apiCall('capture', data);
-        }
-
-        // 取消
-        async function cancel() {
-            const orderId = document.getElementById('orderIdForCapture').value;
-
-            if (!orderId) {
-                showError('取引IDを入力してください');
-                return;
-            }
-
-            await apiCall('cancel', { orderId });
-        }
-
-        // 返金
-        async function refund() {
-            const orderId = document.getElementById('orderIdForCapture').value;
-            const amount = document.getElementById('captureAmount').value;
-
-            if (!orderId) {
-                showError('取引IDを入力してください');
-                return;
-            }
-
-            const data = { orderId };
-            if (amount) {
-                data.amount = amount;
-            }
-
-            await apiCall('refund', data);
         }
 
 

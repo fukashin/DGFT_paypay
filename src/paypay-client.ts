@@ -2,9 +2,6 @@ import axios, { AxiosResponse } from 'axios';
 import {
     PaypayConfig,
     PaypayAuthorizeRequest,
-    PaypayCancelRequest,
-    PaypayCaptureRequest,
-    PaypayRefundRequest,
     PaypayApiRequest,
     PaypayApiResponse,
     PaypayErrorResponse,
@@ -126,82 +123,6 @@ export class PaypayClient {
     }
 
 
-    /**
-     * 取消（Cancel）
-     * @param request 取消リクエスト
-     * @returns APIレスポンス
-     */
-    async cancel(request: Omit<PaypayCancelRequest, 'merchantCcid' | 'txnVersion' | 'serviceOptionType'>): Promise<PaypayApiResponse> {
-        // バリデーション
-        validateOrderId(request.orderId);
-
-        // リクエストパラメータを構築
-        const params: PaypayCancelRequest = {
-            ...request,
-            serviceOptionType: 'online',
-            payNowIdParam: request.payNowIdParam || {},
-            txnVersion: this.config.txnVersion,
-            dummyRequest: this.config.isProduction ? '0' : '1',
-            merchantCcid: this.config.merchantCcid
-        };
-
-        const url = this.getEndpointUrl('CANCEL');
-        return this.sendRequest(url, params);
-    }
-
-    /**
-     * 売上（Capture）
-     * @param request 売上リクエスト
-     * @returns APIレスポンス
-     */
-    async capture(request: Omit<PaypayCaptureRequest, 'merchantCcid' | 'txnVersion' | 'serviceOptionType'>): Promise<PaypayApiResponse> {
-        // バリデーション
-        validateOrderId(request.orderId);
-
-        if (request.amount) {
-            validateAmount(request.amount);
-        }
-
-        // リクエストパラメータを構築
-        const params: PaypayCaptureRequest = {
-            ...request,
-            serviceOptionType: 'online',
-            payNowIdParam: request.payNowIdParam || {},
-            txnVersion: this.config.txnVersion,
-            dummyRequest: this.config.isProduction ? '0' : '1',
-            merchantCcid: this.config.merchantCcid
-        };
-
-        const url = this.getEndpointUrl('CAPTURE');
-        return this.sendRequest(url, params);
-    }
-
-    /**
-     * 返金（Refund）
-     * @param request 返金リクエスト
-     * @returns APIレスポンス
-     */
-    async refund(request: Omit<PaypayRefundRequest, 'merchantCcid' | 'txnVersion' | 'serviceOptionType'>): Promise<PaypayApiResponse> {
-        // バリデーション
-        validateOrderId(request.orderId);
-
-        if (request.amount) {
-            validateAmount(request.amount);
-        }
-
-        // リクエストパラメータを構築
-        const params: PaypayRefundRequest = {
-            ...request,
-            serviceOptionType: 'online',
-            payNowIdParam: request.payNowIdParam || {},
-            txnVersion: this.config.txnVersion,
-            dummyRequest: this.config.isProduction ? '0' : '1',
-            merchantCcid: this.config.merchantCcid
-        };
-
-        const url = this.getEndpointUrl('REFUND');
-        return this.sendRequest(url, params);
-    }
 
 
     /**

@@ -71,139 +71,27 @@ app.post('/api/authorize', async (req, res) => {
                 details: response.result
             });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('申込エラー:', error);
-        res.status(500).json({
-            success: false,
-            error: 'サーバーエラーが発生しました'
-        });
-    }
-});
 
-
-// 売上確定API
-app.post('/api/capture', async (req, res) => {
-    try {
-        const { orderId, amount } = req.body;
-
-        if (!orderId) {
-            return res.status(400).json({
+        // PayPayのAPIエラーレスポンスの場合
+        if (error && error.error) {
+            res.status(500).json({
                 success: false,
-                error: '取引IDが必要です'
-            });
-        }
-
-        const response = await paypayClient.capture({
-            orderId: orderId,
-            amount: amount ? amount.toString() : undefined
-        });
-
-        if (PaypayClient.isSuccess(response)) {
-            res.json({
-                success: true,
-                data: {
-                    orderId: response.result.orderId,
-                    balance: response.result.balance,
-                    paypayCapturedDatetime: response.result.paypayCapturedDatetime
-                }
+                error: error.error.message || 'APIエラーが発生しました',
+                details: error.error
             });
         } else {
-            res.status(400).json({
+            res.status(500).json({
                 success: false,
-                error: PaypayClient.getErrorMessage(response),
-                details: response.result
+                error: error.message || 'サーバーエラーが発生しました',
+                details: error
             });
         }
-    } catch (error) {
-        console.error('売上確定エラー:', error);
-        res.status(500).json({
-            success: false,
-            error: 'サーバーエラーが発生しました'
-        });
     }
 });
 
-// 取消API
-app.post('/api/cancel', async (req, res) => {
-    try {
-        const { orderId } = req.body;
 
-        if (!orderId) {
-            return res.status(400).json({
-                success: false,
-                error: '取引IDが必要です'
-            });
-        }
-
-        const response = await paypayClient.cancel({
-            orderId: orderId
-        });
-
-        if (PaypayClient.isSuccess(response)) {
-            res.json({
-                success: true,
-                data: {
-                    orderId: response.result.orderId,
-                    paypayCancelledDatetime: response.result.paypayCancelledDatetime
-                }
-            });
-        } else {
-            res.status(400).json({
-                success: false,
-                error: PaypayClient.getErrorMessage(response),
-                details: response.result
-            });
-        }
-    } catch (error) {
-        console.error('取消エラー:', error);
-        res.status(500).json({
-            success: false,
-            error: 'サーバーエラーが発生しました'
-        });
-    }
-});
-
-// 返金API
-app.post('/api/refund', async (req, res) => {
-    try {
-        const { orderId, amount } = req.body;
-
-        if (!orderId) {
-            return res.status(400).json({
-                success: false,
-                error: '取引IDが必要です'
-            });
-        }
-
-        const response = await paypayClient.refund({
-            orderId: orderId,
-            amount: amount ? amount.toString() : undefined
-        });
-
-        if (PaypayClient.isSuccess(response)) {
-            res.json({
-                success: true,
-                data: {
-                    orderId: response.result.orderId,
-                    balance: response.result.balance,
-                    paypayRefundedDatetime: response.result.paypayRefundedDatetime
-                }
-            });
-        } else {
-            res.status(400).json({
-                success: false,
-                error: PaypayClient.getErrorMessage(response),
-                details: response.result
-            });
-        }
-    } catch (error) {
-        console.error('返金エラー:', error);
-        res.status(500).json({
-            success: false,
-            error: 'サーバーエラーが発生しました'
-        });
-    }
-});
 
 
 // プッシュ通知受信API

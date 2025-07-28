@@ -24,38 +24,6 @@ export interface PaypayAuthorizeRequest {
 }
 
 
-// 取消（Cancel）リクエスト
-export interface PaypayCancelRequest {
-    orderId: string; // 取引ID
-    serviceOptionType: 'online';
-    payNowIdParam?: PayNowIdParam;
-    txnVersion?: string;
-    dummyRequest?: '0' | '1';
-    merchantCcid: string;
-}
-
-// 売上（Capture）リクエスト
-export interface PaypayCaptureRequest {
-    orderId: string; // 取引ID
-    serviceOptionType: 'online';
-    amount?: string; // 売上金額
-    orderDescription?: string; // 注文の説明（最大255文字）
-    payNowIdParam?: PayNowIdParam;
-    txnVersion?: string;
-    dummyRequest?: '0' | '1';
-    merchantCcid: string;
-}
-
-// 返金（Refund）リクエスト
-export interface PaypayRefundRequest {
-    orderId: string; // 取引ID
-    serviceOptionType: 'online';
-    amount?: string; // 返金金額
-    payNowIdParam?: PayNowIdParam;
-    txnVersion?: string;
-    dummyRequest?: '0' | '1';
-    merchantCcid: string;
-}
 
 
 // API リクエストの共通構造
@@ -118,18 +86,12 @@ export interface PaypayConfig {
     txnVersion: string; // トランザクションバージョン
 }
 
-// API エンドポイント（都度決済のみ）
+// API エンドポイント（申込のみ）
 export const PAYPAY_ENDPOINTS = {
     PRODUCTION: {
-        AUTHORIZE: 'https://api3.veritrans.co.jp/paynow/v2/Authorize/paypay',
-        CANCEL: 'https://api3.veritrans.co.jp/paynow/v2/Cancel/paypay',
-        CAPTURE: 'https://api3.veritrans.co.jp/paynow/v2/Capture/paypay',
-        REFUND: 'https://api3.veritrans.co.jp/paynow/v2/Refund/paypay'
+        AUTHORIZE: 'https://api3.veritrans.co.jp/paynow/v2/Authorize/paypay'
     },
     TEST: {
-        AUTHORIZE: 'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
-        CANCEL: 'https://api3.veritrans.co.jp/test-paynow/v2/Cancel/paypay',
-        CAPTURE: 'https://api3.veritrans.co.jp/test-paynow/v2/Capture/paypay',
-        REFUND: 'https://api3.veritrans.co.jp/test-paynow/v2/Refund/paypay'
+        AUTHORIZE: 'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay'
     }
 } as const;
