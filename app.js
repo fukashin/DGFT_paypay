@@ -1,17 +1,26 @@
-// app.js
 const express = require('express');
 const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
+const iconv = require('iconv-lite');
 require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
 
-app.get('/pay', async (req, res) => {
+// 静的ファイル（views）を有効に
+app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.urlencoded({ extended: true })); // POST用
+
+// ① トップページ：決済ボタンを表示
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+// ② POST /pay → PayPay決済開始
+app.post('/pay', async (req, res) => {
     try {
-        // 一意な orderId を生成
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
         const randomStr = crypto.randomBytes(3).toString('hex');
         const orderId = `order-${timestamp}-${randomStr}`;
@@ -48,17 +57,23 @@ app.get('/pay', async (req, res) => {
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
             requestBody,
-            { headers: { 'Content-Type': 'application/json' } }
+            {
+                headers: { 'Content-Type': 'application/json' },
+                responseType: 'arraybuffer'
+            }
         );
 
-        res.set('Content-Type', 'text/html; charset=Shift_JIS');
-        res.send(response.data);
+        const htmlContent = iconv.decode(response.data, 'Shift_JIS');
+
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.send(htmlContent);
+
     } catch (err) {
-        console.error('❌ エラー:', err.message);
-        res.status(500).send('サーバーエラーが発生しました');
+        console.error('❌ 決済エラー:', err.message);
+        res.status(500).send('決済エラーが発生しました');
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 サーバー起動: http://localhost:${PORT}/pay`);
+    console.log(`✅ サーバー起動: http://localhost:${PORT}`);
 });
