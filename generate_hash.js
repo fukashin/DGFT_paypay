@@ -6,7 +6,7 @@ require('dotenv').config();
 const merchantCcid = process.env.MERCHANT_CCID;
 const merchantKey = process.env.MERCHANT_KEY;
 
-// params 定義
+// params 定義（PayPay決済に必要な項目）
 const params = {
     orderId: "dummy001",
     serviceOptionType: "online",
@@ -21,28 +21,27 @@ const params = {
     transitionType: "1",
     extendParameterType: "0",
     txnVersion: "2.0.0",
-    dummyRequest: "1",
+    dummyRequest: 1, // 数値で渡す方がAPI仕様と一致
     merchantCcid: merchantCcid
 };
 
-// JSON文字列をminify
+// 最小化されたJSON文字列を生成（空白・改行なし）
 const minifiedParams = JSON.stringify(params);
-const encodedParams = encodeURIComponent(minifiedParams);
 
-// 署名用文字列
-const rawString = merchantCcid + encodedParams + merchantKey;
+// 署名用文字列を作成（エンコードせず連結）
+const rawString = merchantCcid + minifiedParams + merchantKey;
 
-// SHA256ハッシュを生成
+// SHA-256 ハッシュを生成
 const authHash = crypto.createHash('sha256').update(rawString, 'utf8').digest('hex');
 
-// JSON出力用オブジェクト
+// リクエストオブジェクト生成
 const result = {
     params: params,
     authHash: authHash
 };
 
-// ファイル出力
+// ファイルに保存（request.json）
 fs.writeFileSync('./request.json', JSON.stringify(result, null, 2), 'utf8');
 
-// 表示
+// ハッシュ確認
 console.log(`authHash: ${authHash}`);
