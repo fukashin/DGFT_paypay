@@ -70,6 +70,7 @@ app.post('/pay', async (req, res) => {
             res.send(response.data.responseContents);
         } else {
             // 通常のShift_JIS HTMLバイナリだった場合
+            const iconv = require('iconv-lite');
             const html = iconv.decode(response.data, 'Shift_JIS');
             res.set('Content-Type', 'text/html; charset=utf-8');
             res.send(html);
