@@ -63,6 +63,7 @@ app.post('/pay', async (req, res) => {
             }
         );
 
+        const iconv = require('iconv-lite');
         const htmlContent = iconv.decode(response.data, 'Shift_JIS');
 
         res.set('Content-Type', 'text/html; charset=utf-8');
