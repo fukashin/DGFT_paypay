@@ -64,9 +64,16 @@ app.post('/pay', async (req, res) => {
             }
         );
 
-        // HTMLとしてそのままクライアントに返却
-        res.set('Content-Type', 'text/html');
-        res.send(response.data);
+        // JSONとしてレスポンスが返ってくるなら（responseContentsが含まれているなら）
+        if (typeof response.data === 'object' && response.data.responseContents) {
+            res.set('Content-Type', 'text/html; charset=Shift_JIS');
+            res.send(response.data.responseContents);
+        } else {
+            // 通常のShift_JIS HTMLバイナリだった場合
+            const html = iconv.decode(response.data, 'Shift_JIS');
+            res.set('Content-Type', 'text/html; charset=utf-8');
+            res.send(html);
+        }
 
     } catch (err) {
         console.error('❌ 決済エラー:', err.message);
