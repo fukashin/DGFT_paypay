@@ -1,6 +1,4 @@
-// app.js
 const express = require('express');
-const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -11,7 +9,7 @@ const PORT = 3000;
 
 app.get('/pay', async (req, res) => {
     try {
-        // 一意な orderId を生成
+        // orderId を一意に生成
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
         const randomStr = crypto.randomBytes(3).toString('hex');
         const orderId = `order-${timestamp}-${randomStr}`;
@@ -40,19 +38,21 @@ app.get('/pay', async (req, res) => {
         const rawString = merchantCcid + JSON.stringify(params) + merchantKey;
         const authHash = crypto.createHash('sha256').update(rawString, 'utf8').digest('hex');
 
-        const requestBody = {
-            params,
-            authHash
-        };
+        const requestBody = { params, authHash };
 
+        // バイナリとして受け取る（Shift_JISのため）
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
             requestBody,
-            { headers: { 'Content-Type': 'application/json' } }
+            {
+                headers: { 'Content-Type': 'application/json' },
+                responseType: 'arraybuffer' // バイナリで受け取るのが重要！
+            }
         );
 
+        // そのまま Shift_JIS でクライアントに返す（画面遷移させる）
         res.set('Content-Type', 'text/html; charset=Shift_JIS');
-        res.send(response.data);
+        res.send(Buffer.from(response.data));
     } catch (err) {
         console.error('❌ エラー:', err.message);
         res.status(500).send('サーバーエラーが発生しました');
