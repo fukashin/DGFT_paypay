@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -10,7 +9,6 @@ const PORT = 3000;
 
 app.get('/pay', async (req, res) => {
     try {
-        // ✅ orderId生成
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
         const randomStr = crypto.randomBytes(3).toString('hex');
         const orderId = `order-${timestamp}-${randomStr}`;
@@ -36,8 +34,7 @@ app.get('/pay', async (req, res) => {
             merchantCcid
         };
 
-        const minifiedParams = JSON.stringify(params);
-        const rawString = merchantCcid + minifiedParams + merchantKey;
+        const rawString = merchantCcid + JSON.stringify(params) + merchantKey;
         const authHash = crypto.createHash('sha256').update(rawString, 'utf8').digest('hex');
 
         const requestBody = {
@@ -45,16 +42,19 @@ app.get('/pay', async (req, res) => {
             authHash
         };
 
-        // ✅ PayPay API 実行
+        // ✅ PayPay API 実行（arraybufferでHTMLをそのまま受け取る）
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
             requestBody,
-            { headers: { 'Content-Type': 'application/json' } }
+            {
+                headers: { 'Content-Type': 'application/json' },
+                responseType: 'arraybuffer' // Shift_JIS 対応に必要
+            }
         );
 
-        // ✅ PayPayが返してくるHTMLをクライアントへそのまま送信
+        // ✅ HTMLコンテンツをShift_JISでそのまま返却（遷移用JS入り）
         res.set('Content-Type', 'text/html; charset=Shift_JIS');
-        res.send(response.data);
+        res.send(Buffer.from(response.data));
 
     } catch (err) {
         console.error('❌ エラー:', err.message);
