@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -9,7 +10,7 @@ const PORT = 3000;
 
 app.get('/pay', async (req, res) => {
     try {
-        // orderId を一意に生成
+        // ✅ orderId生成
         const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
         const randomStr = crypto.randomBytes(3).toString('hex');
         const orderId = `order-${timestamp}-${randomStr}`;
@@ -35,30 +36,32 @@ app.get('/pay', async (req, res) => {
             merchantCcid
         };
 
-        const rawString = merchantCcid + JSON.stringify(params) + merchantKey;
+        const minifiedParams = JSON.stringify(params);
+        const rawString = merchantCcid + minifiedParams + merchantKey;
         const authHash = crypto.createHash('sha256').update(rawString, 'utf8').digest('hex');
 
-        const requestBody = { params, authHash };
+        const requestBody = {
+            params,
+            authHash
+        };
 
-        // バイナリとして受け取る（Shift_JISのため）
+        // ✅ PayPay API 実行
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
             requestBody,
-            {
-                headers: { 'Content-Type': 'application/json' },
-                responseType: 'arraybuffer' // バイナリで受け取るのが重要！
-            }
+            { headers: { 'Content-Type': 'application/json' } }
         );
 
-        // そのまま Shift_JIS でクライアントに返す（画面遷移させる）
+        // ✅ PayPayが返してくるHTMLをクライアントへそのまま送信
         res.set('Content-Type', 'text/html; charset=Shift_JIS');
-        res.send(Buffer.from(response.data));
+        res.send(response.data);
+
     } catch (err) {
         console.error('❌ エラー:', err.message);
-        res.status(500).send('サーバーエラーが発生しました');
+        res.status(500).send('エラーが発生しました');
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 サーバー起動: http://localhost:${PORT}/pay`);
+    console.log(`🚀 サーバー起動中: http://localhost:${PORT}/pay`);
 });
