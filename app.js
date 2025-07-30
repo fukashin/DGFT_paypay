@@ -1,7 +1,7 @@
 const express = require('express');
-const crypto = require('crypto');
-const axios = require('axios');
+const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -9,12 +9,13 @@ const PORT = 3000;
 
 app.get('/pay', async (req, res) => {
     try {
-        const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
-        const randomStr = crypto.randomBytes(3).toString('hex');
-        const orderId = `order-${timestamp}-${randomStr}`;
-
+        // 📦 リクエストボディを生成
         const merchantCcid = process.env.MERCHANT_CCID;
         const merchantKey = process.env.MERCHANT_KEY;
+
+        const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
+        const randomStr = Math.random().toString(36).substring(2, 8);
+        const orderId = `order-${timestamp}-${randomStr}`;
 
         const params = {
             orderId,
@@ -34,34 +35,31 @@ app.get('/pay', async (req, res) => {
             merchantCcid
         };
 
-        const rawString = merchantCcid + JSON.stringify(params) + merchantKey;
-        const authHash = crypto.createHash('sha256').update(rawString, 'utf8').digest('hex');
+        const minifiedParams = JSON.stringify(params);
+        const rawString = merchantCcid + minifiedParams + merchantKey;
+        const authHash = require('crypto').createHash('sha256').update(rawString, 'utf8').digest('hex');
 
-        const requestBody = {
-            params,
-            authHash
-        };
-
-        // ✅ PayPay API 実行（arraybufferでHTMLをそのまま受け取る）
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
-            requestBody,
-            {
-                headers: { 'Content-Type': 'application/json' },
-                responseType: 'arraybuffer' // Shift_JIS 対応に必要
-            }
+            { params, authHash },
+            { headers: { 'Content-Type': 'application/json' } }
         );
 
-        // ✅ HTMLコンテンツをShift_JISでそのまま返却（遷移用JS入り）
+        const htmlContent = response.data?.result?.responseContents;
+        if (!htmlContent) {
+            throw new Error('responseContents が存在しません');
+        }
+
+        // ✅ 即時レスポンスとしてHTMLを返却（Shift_JISで）
         res.set('Content-Type', 'text/html; charset=Shift_JIS');
-        res.send(Buffer.from(response.data));
+        res.send(htmlContent);
 
     } catch (err) {
         console.error('❌ エラー:', err.message);
-        res.status(500).send('エラーが発生しました');
+        res.status(500).send(`<h1>エラーが発生しました</h1><p>${err.message}</p>`);
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 サーバー起動中: http://localhost:${PORT}/pay`);
+    console.log(`🚀 http://localhost:${PORT}/pay にアクセスして決済画面へ`);
 });
