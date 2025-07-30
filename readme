@@ -2,4 +2,4 @@
 npm install axios
 # create generate_hash.ps1 and request.js (Notepadなどで)
 powershell -Command ./generate_hash.ps1
-node request.js
+node request.js　
