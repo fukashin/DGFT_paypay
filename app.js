@@ -52,43 +52,123 @@ app.post('/pay', async (req, res) => {
 
         const requestBody = { params, authHash };
 
-        // Shift-JIS対応でレスポンス受け取り
+        // PayPay APIへリクエスト送信
         const response = await axios.post(
             'https://api3.veritrans.co.jp/test-paynow/v2/Authorize/paypay',
             requestBody,
             {
                 headers: { 'Content-Type': 'application/json' },
-                responseType: 'arraybuffer' // ←バイナリで取得
+                responseType: 'arraybuffer' // バイナリデータとして受信
             }
         );
 
-        const text = iconv.decode(response.data, 'Shift_JIS');
+        // レスポンスをShift-JISからUTF-8にデコード
+        const responseText = iconv.decode(response.data, 'Shift_JIS');
 
-        // JSONエラーかHTMLかを判定
-        if (text.trim().startsWith('{')) {
-            // JSON（エラー応答）
-            const json = JSON.parse(text);
-            console.log('🟡 JSONエラー応答:', json);
+        console.log('PayPay APIレスポンス:', responseText);
 
-            // merrMsg 再デコード（文字化け防止）
-            const sjisBuffer = Buffer.from([...json.result.merrMsg].map(c => c.charCodeAt(0)));
-            const merrMsg = iconv.decode(sjisBuffer, 'Shift_JIS');
+        // JSONレスポンス（エラー）かHTMLレスポンス（成功）かを判定
+        if (responseText.trim().startsWith('{')) {
+            // JSONエラーレスポンスの場合
+            const jsonResponse = JSON.parse(responseText);
+            console.log('🟡 PayPay APIエラー:', jsonResponse);
 
-            res.status(400).send(`
-                <h1>決済エラー</h1>
-                <p><strong>コード:</strong> ${json.result.vResultCode}</p>
-                <p><strong>内容:</strong> ${merrMsg}</p>
-            `);
+            // エラーメッセージを適切にデコード
+            let errorMessage = jsonResponse.result?.merrMsg || 'エラーが発生しました';
+
+            // エラーページをUTF-8で返す
+            const errorHtml = `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>決済エラー - PayPay</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .error-container { max-width: 600px; margin: 0 auto; }
+        .error-title { color: #d32f2f; margin-bottom: 20px; }
+        .error-details { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+        .back-button { margin-top: 20px; }
+        .back-button a { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            background: #1976d2; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-title">決済エラーが発生しました</h1>
+        <div class="error-details">
+            <p><strong>エラーコード:</strong> ${jsonResponse.result?.vResultCode || 'N/A'}</p>
+            <p><strong>エラー内容:</strong> ${errorMessage}</p>
+            <p><strong>処理結果:</strong> ${jsonResponse.result?.mstatus || 'N/A'}</p>
+        </div>
+        <div class="back-button">
+            <a href="/">戻る</a>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            res.status(400).set('Content-Type', 'text/html; charset=UTF-8').send(errorHtml);
+
         } else {
-            // HTML（正常遷移）
-            console.log('🟢 HTML応答（Shift-JISのまま返却）');
+            // HTMLレスポンス（正常な決済画面遷移）の場合
+            console.log('🟢 PayPay決済画面への遷移HTML受信');
+
+            // PayPayのresponseContentsはShift-JISで返す必要がある
+            // 参考URL記載: 「必ず Shift-JIS で返戻して下さい」
             res.set('Content-Type', 'text/html; charset=Shift_JIS');
-            res.send(response.data); // ← decode せずそのまま返す
+            res.send(response.data); // 元のShift-JISバイナリデータをそのまま返す
         }
 
     } catch (err) {
         console.error('❌ 決済処理例外:', err.message);
-        res.status(500).send('サーバーエラーが発生しました');
+
+        // サーバーエラー時も適切なHTMLで返す
+        const serverErrorHtml = `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サーバーエラー - PayPay</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .error-container { max-width: 600px; margin: 0 auto; }
+        .error-title { color: #d32f2f; margin-bottom: 20px; }
+        .error-details { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+        .back-button { margin-top: 20px; }
+        .back-button a { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            background: #1976d2; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-title">サーバーエラーが発生しました</h1>
+        <div class="error-details">
+            <p><strong>エラー内容:</strong> ${err.message}</p>
+            <p>しばらく時間をおいてから再度お試しください。</p>
+        </div>
+        <div class="back-button">
+            <a href="/">戻る</a>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        res.status(500).set('Content-Type', 'text/html; charset=UTF-8').send(serverErrorHtml);
     }
 });
 
