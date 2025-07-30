@@ -76,24 +76,40 @@ app.post('/pay', async (req, res) => {
             // エラーコードに基づいて日本語メッセージを生成
             const vResultCode = jsonResponse.result?.vResultCode || '';
             console.log('エラーコード:', vResultCode);
-            console.log('元のエラーメッセージ:', jsonResponse.result?.merrMsg);
 
-            // エラーコードに基づく日本語メッセージマッピング
-            let errorMessage = 'エラーが発生しました';
+            // 元のエラーメッセージは文字化けの可能性があるため使用しない
+            console.log('元のエラーメッセージ（参考）:', jsonResponse.result?.merrMsg);
 
-            if (vResultCode.startsWith('OC02')) {
-                errorMessage = 'PayPay決済の処理でエラーが発生しました。設定を確認してください。';
+            // エラーコードに基づく詳細な日本語メッセージマッピング
+            let errorMessage = 'PayPay決済でエラーが発生しました';
+            let errorDetail = '';
+
+            // OC02で始まるエラーコードの詳細分析
+            if (vResultCode === 'OC02000000000000') {
+                errorMessage = 'PayPay決済の設定エラー';
+                errorDetail = 'マーチャントIDまたは認証情報に問題があります。設定を確認してください。';
+            } else if (vResultCode.startsWith('OC02')) {
+                errorMessage = 'PayPay決済処理エラー';
+                errorDetail = '決済処理中にエラーが発生しました。しばらく時間をおいてから再度お試しください。';
             } else if (vResultCode.startsWith('OC01')) {
-                errorMessage = 'PayPay決済の認証でエラーが発生しました。';
+                errorMessage = 'PayPay認証エラー';
+                errorDetail = '認証に失敗しました。設定を確認してください。';
             } else if (vResultCode.startsWith('OC03')) {
-                errorMessage = 'PayPay決済のネットワークエラーが発生しました。';
+                errorMessage = 'PayPayネットワークエラー';
+                errorDetail = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
             } else if (vResultCode.includes('0000')) {
-                errorMessage = 'PayPay決済の設定に問題があります。管理者にお問い合わせください。';
+                errorMessage = 'PayPay設定エラー';
+                errorDetail = '決済設定に問題があります。管理者にお問い合わせください。';
+            } else if (vResultCode) {
+                errorMessage = 'PayPay決済エラー';
+                errorDetail = `エラーコード: ${vResultCode}`;
             } else {
-                errorMessage = `PayPay決済でエラーが発生しました（エラーコード: ${vResultCode}）`;
+                errorMessage = 'PayPay決済エラー';
+                errorDetail = '不明なエラーが発生しました。';
             }
 
             console.log('日本語エラーメッセージ:', errorMessage);
+            console.log('エラー詳細:', errorDetail);
 
             // エラーページをUTF-8で返す
             const errorHtml = `
@@ -125,6 +141,7 @@ app.post('/pay', async (req, res) => {
         <div class="error-details">
             <p><strong>エラーコード:</strong> ${jsonResponse.result?.vResultCode || 'N/A'}</p>
             <p><strong>エラー内容:</strong> ${errorMessage}</p>
+            <p><strong>詳細:</strong> ${errorDetail}</p>
             <p><strong>処理結果:</strong> ${jsonResponse.result?.mstatus || 'N/A'}</p>
         </div>
         <div class="back-button">
