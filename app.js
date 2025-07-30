@@ -73,8 +73,27 @@ app.post('/pay', async (req, res) => {
             const jsonResponse = JSON.parse(responseText);
             console.log('🟡 PayPay APIエラー:', jsonResponse);
 
-            // エラーメッセージを適切にデコード
-            let errorMessage = jsonResponse.result?.merrMsg || 'エラーが発生しました';
+            // エラーコードに基づいて日本語メッセージを生成
+            const vResultCode = jsonResponse.result?.vResultCode || '';
+            console.log('エラーコード:', vResultCode);
+            console.log('元のエラーメッセージ:', jsonResponse.result?.merrMsg);
+
+            // エラーコードに基づく日本語メッセージマッピング
+            let errorMessage = 'エラーが発生しました';
+
+            if (vResultCode.startsWith('OC02')) {
+                errorMessage = 'PayPay決済の処理でエラーが発生しました。設定を確認してください。';
+            } else if (vResultCode.startsWith('OC01')) {
+                errorMessage = 'PayPay決済の認証でエラーが発生しました。';
+            } else if (vResultCode.startsWith('OC03')) {
+                errorMessage = 'PayPay決済のネットワークエラーが発生しました。';
+            } else if (vResultCode.includes('0000')) {
+                errorMessage = 'PayPay決済の設定に問題があります。管理者にお問い合わせください。';
+            } else {
+                errorMessage = `PayPay決済でエラーが発生しました（エラーコード: ${vResultCode}）`;
+            }
+
+            console.log('日本語エラーメッセージ:', errorMessage);
 
             // エラーページをUTF-8で返す
             const errorHtml = `
